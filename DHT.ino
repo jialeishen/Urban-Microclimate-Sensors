@@ -8,6 +8,9 @@
 #define DHTPIN 2     // RH, T read in pin
 #define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
 
+File dataFile;
+String fileName = "data.txt";
+
 uint8_t CE_PIN   = 5;
 uint8_t IO_PIN   = 8;
 uint8_t SCLK_PIN = 9;
@@ -30,6 +33,8 @@ void setup() {
   pinMode(6, OUTPUT);
   pinMode(7, OUTPUT);
   pinMode(3, INPUT_PULLUP);
+  digitalWrite(6, HIGH);
+  digitalWrite(7, HIGH);
   while(digitalRead(3)){}
   
   Serial.println("Initializing SD card");
@@ -40,9 +45,6 @@ void setup() {
     while(1);
   }
   Serial.println("initialization done.");
-  digitalWrite(6, HIGH);
-  digitalWrite(7, HIGH);
-  delay(100);
   digitalWrite(6, LOW);
   digitalWrite(7, LOW);
   delay(100);
@@ -52,6 +54,12 @@ void setup() {
   digitalWrite(6, LOW);
   digitalWrite(7, LOW);
 
+  dataFile = SD.open(fileName, FILE_WRITE);
+  dataFile.println("Start recording...");
+  dataFile.close();
+  dataFile = SD.open(fileName, FILE_WRITE);
+  dataFile.println("Week Date Time Humidity(%) Temperature(*C)");
+  dataFile.close();
   dht.begin();
 }
 
@@ -82,13 +90,16 @@ void loop() {
     return;
   }
   String dataString = "";
-  dataString = buf + String(H) + "%RH " + String(T) + "*C";
-  File dataFile = SD.open("DATA.txt", FILE_WRITE);
+  String dataStringShow = "";
+  dataStringShow = buf + String(H) + "%RH " + String(T) + "*C";
+  dataString = buf + String(H) + String(T);
+  dataFile = SD.open(fileName, FILE_WRITE);
   if (dataFile)
   {
     dataFile.println(dataString);
     dataFile.close();
-    Serial.println(dataString);
+    
+    Serial.println(dataStringShow);
     Serial.println("writing...");
     digitalWrite(7, HIGH);
     delay(500);
@@ -96,7 +107,7 @@ void loop() {
   }
   else
   {
-    Serial.println("error opening DATA.txt");
+    Serial.println("error opening data.txt");
     digitalWrite(6, HIGH);
     delay(500);
     digitalWrite(6, LOW);
